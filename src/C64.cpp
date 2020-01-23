@@ -32,7 +32,6 @@ enum Colors {
 C64::
 C64()
 {
-  init();
 }
 
 void
