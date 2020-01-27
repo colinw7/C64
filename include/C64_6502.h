@@ -17,14 +17,21 @@ class C64_6502 : public C6502 {
 
   bool isScreen(ushort pos, ushort len) const override;
 
-  void update() override;
+  ushort gpuMem() const { return gpuMem1_; }
+
+  ushort charMem() const { return charMem1_; }
 
  private:
-  C64*  machine_ { nullptr };
-  bool  debug_   { false };
-  bool  loram_   { true };
-  bool  hiram_   { true };
-  bool  charen_  { true };
+  C64*   machine_  { nullptr };
+  bool   debug_    { false };
+  bool   loram_    { true };
+  bool   hiram_    { true };
+  bool   charen_   { true };
+  uchar  gpuBank_  { 0 };
+  ushort gpuMem1_  { 0x0000 };
+  ushort gpuMem2_  { 0x3FFF };
+  ushort charMem1_ { 0x1000 };
+  ushort charMem2_ { 0x1FFF };
 };
 
 #endif

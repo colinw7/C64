@@ -5,6 +5,7 @@ using uchar  = unsigned char;
 using ushort = unsigned short;
 
 class C64_6502;
+class C64_VICII;
 class C6502;
 
 class C64 {
@@ -13,40 +14,22 @@ class C64 {
 
   virtual ~C64() { }
 
-  void init();
-
-  virtual C64_6502 *createCPU();
-
-  ushort screenLine() const { return screenLine_; }
-
-  void setRasterCompareInterruptValue(ushort s) { rasterCompareInterruptValue_ = s; }
+  virtual void init();
 
   void loadKeyColumn(int i);
 
-  C6502 *getCPU() const;
-
-  virtual void update() { }
+  C64_6502  *getCPU() const { return cpu_; }
+  C64_VICII *getGPU() const { return gpu_; }
 
  protected:
   void initMemory();
 
   void tick(ushort n);
 
-  void drawScreen();
-
-  void drawCharBorder();
-
-  void drawChar(int x, int y, int i, uchar c);
-
-  void drawSprites();
-  void drawSprite(int s, uchar addr, bool doubleWidth, bool doubleHeight, bool multiColor);
-
-  virtual void drawPixel(int x, int y, uchar c);
-
   void startTimerA(bool start);
   void startTimerB(bool start);
 
- private:
+ protected:
   friend class C64_6502;
 
   struct Timer {
@@ -67,11 +50,10 @@ class C64 {
                                   //  3 = Count Timer A 0's when CNT pulses are also present
   };
 
-  C64_6502* cpu_                         { nullptr };
-  ushort    screenLine_                  { 0 };
-  ushort    rasterCompareInterruptValue_ { 0 };
-  Timer     timerA_;
-  Timer     timerB_;
+  C64_6502*  cpu_ { nullptr };
+  C64_VICII* gpu_ { nullptr };
+  Timer      timerA_;
+  Timer      timerB_;
 };
 
 #endif

@@ -2,44 +2,41 @@
 #define CQ64_H
 
 #include <C64.h>
-#include <QWidget>
+#include <QObject>
 
+class CQ64_6502;
+class CQ64_VICII;
 class QImage;
 
-class CQ64 : public QWidget, public C64{
+class CQ64 : public QObject, public C64 {
   Q_OBJECT
 
  public:
   CQ64();
 
-  C64_6502 *createCPU() override;
+  void init() override;
 
-  int scale() const { return scale_; }
-  void setScale(int i);
+  CQ64_6502  *getCPU() const { return qcpu_; }
+  CQ64_VICII *getGPU() const { return qgpu_; }
 
-  void drawPixel(int x, int y, uchar c) override;
-
-  void update() override;
-
-  void resizeEvent(QResizeEvent *) override;
-
-  void paintEvent(QPaintEvent *) override;
-
- private:
-  void setColor(uchar c);
+  void show();
 
  signals:
-  void registerChangedSignal();
-  void flagsChangedSignal();
-  void stackChangedSignal();
+//void registerChangedSignal();
+//void flagsChangedSignal();
+//void stackChangedSignal();
   void pcChangedSignal();
   void memChangedSignal();
 
+  void handleBreakSignal();
+  void breakpointHitSignal();
+  void illegalJumpSignal();
+
+  void breakpointsChangedSignal();
+
  private:
-  QImage*   image_    { nullptr };
-  QPainter* ipainter_ { nullptr };
-  int       scale_    { -1 };
-  bool      dirty_    { false };
+  CQ64_6502  *qcpu_ { nullptr };
+  CQ64_VICII *qgpu_ { nullptr };
 };
 
 #endif

@@ -13,6 +13,8 @@ all: $(LIB_DIR)/libC64.a
 
 SRC = \
 C64.cpp \
+C64_6502.cpp \
+C64_VICII.cpp \
 
 OBJS = $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(SRC))
 

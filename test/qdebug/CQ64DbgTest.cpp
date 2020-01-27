@@ -1,7 +1,6 @@
 #include <CQ64Dbg.h>
 #include <CQApp.h>
 #include <CQ64.h>
-#include <fstream>
 
 int
 main(int argc, char **argv)
