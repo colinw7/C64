@@ -1,6 +1,7 @@
 #include <CQ64.h>
 #include <CQ64_6502.h>
 #include <CQ64_VICII.h>
+#include <CQ64_CIA.h>
 #include <QPainter>
 
 CQ64::
@@ -15,6 +16,9 @@ init()
 {
   cpu_ = qcpu_ = new CQ64_6502 (this);
   gpu_ = qgpu_ = new CQ64_VICII(this);
+
+  cia1_ = qcia1_ = new CQ64_CIA(this, 1);
+  cia2_ = qcia2_ = new CQ64_CIA(this, 2);
 
 //connect(qcpu_, SIGNAL(registerChangedSignal()), this, SIGNAL(registerChangedSignal()));
 

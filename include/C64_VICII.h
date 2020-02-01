@@ -12,6 +12,10 @@ class C64_VICII {
  public:
   C64_VICII(C64 *c64);
 
+  virtual ~C64_VICII() { }
+
+  //---
+
   uchar getByte(ushort addr) const;
   void setByte(ushort addr, uchar c);
 
@@ -25,6 +29,8 @@ class C64_VICII {
 
   void drawSprites();
   void drawSprite(int s, uchar addr, bool doubleWidth, bool doubleHeight, bool multiColor);
+
+  virtual void fillScreen(uchar c);
 
   virtual void drawPixel(int x, int y, uchar c);
 

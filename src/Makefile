@@ -15,6 +15,7 @@ SRC = \
 C64.cpp \
 C64_6502.cpp \
 C64_VICII.cpp \
+C64_CIA.cpp \
 
 OBJS = $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(SRC))
 

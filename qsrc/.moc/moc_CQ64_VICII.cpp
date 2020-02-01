@@ -21,8 +21,8 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_CQ64_VICII_t {
-    QByteArrayData data[5];
-    char stringdata0[44];
+    QByteArrayData data[6];
+    char stringdata0[51];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -35,11 +35,12 @@ QT_MOC_LITERAL(0, 0, 10), // "CQ64_VICII"
 QT_MOC_LITERAL(1, 11, 14), // "memChangedSlot"
 QT_MOC_LITERAL(2, 26, 0), // ""
 QT_MOC_LITERAL(3, 27, 10), // "updateSlot"
-QT_MOC_LITERAL(4, 38, 5) // "scale"
+QT_MOC_LITERAL(4, 38, 6), // "margin"
+QT_MOC_LITERAL(5, 45, 5) // "scale"
 
     },
     "CQ64_VICII\0memChangedSlot\0\0updateSlot\0"
-    "scale"
+    "margin\0scale"
 };
 #undef QT_MOC_LITERAL
 
@@ -50,7 +51,7 @@ static const uint qt_meta_data_CQ64_VICII[] = {
        0,       // classname
        0,    0, // classinfo
        2,   14, // methods
-       1,   26, // properties
+       2,   26, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
@@ -66,6 +67,7 @@ static const uint qt_meta_data_CQ64_VICII[] = {
 
  // properties: name, type, flags
        4, QMetaType::Int, 0x00095103,
+       5, QMetaType::Int, 0x00095103,
 
        0        // eod
 };
@@ -87,7 +89,8 @@ void CQ64_VICII::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         Q_UNUSED(_t)
         void *_v = _a[0];
         switch (_id) {
-        case 0: *reinterpret_cast< int*>(_v) = _t->scale(); break;
+        case 0: *reinterpret_cast< int*>(_v) = _t->margin(); break;
+        case 1: *reinterpret_cast< int*>(_v) = _t->scale(); break;
         default: break;
         }
     } else if (_c == QMetaObject::WriteProperty) {
@@ -95,7 +98,8 @@ void CQ64_VICII::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         Q_UNUSED(_t)
         void *_v = _a[0];
         switch (_id) {
-        case 0: _t->setScale(*reinterpret_cast< int*>(_v)); break;
+        case 0: _t->setMargin(*reinterpret_cast< int*>(_v)); break;
+        case 1: _t->setScale(*reinterpret_cast< int*>(_v)); break;
         default: break;
         }
     } else if (_c == QMetaObject::ResetProperty) {
@@ -143,17 +147,17 @@ int CQ64_VICII::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
    else if (_c == QMetaObject::ReadProperty || _c == QMetaObject::WriteProperty
             || _c == QMetaObject::ResetProperty || _c == QMetaObject::RegisterPropertyMetaType) {
         qt_static_metacall(this, _c, _id, _a);
-        _id -= 1;
+        _id -= 2;
     } else if (_c == QMetaObject::QueryPropertyDesignable) {
-        _id -= 1;
+        _id -= 2;
     } else if (_c == QMetaObject::QueryPropertyScriptable) {
-        _id -= 1;
+        _id -= 2;
     } else if (_c == QMetaObject::QueryPropertyStored) {
-        _id -= 1;
+        _id -= 2;
     } else if (_c == QMetaObject::QueryPropertyEditable) {
-        _id -= 1;
+        _id -= 2;
     } else if (_c == QMetaObject::QueryPropertyUser) {
-        _id -= 1;
+        _id -= 2;
     }
 #endif // QT_NO_PROPERTIES
     return _id;

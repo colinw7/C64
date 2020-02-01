@@ -1,6 +1,7 @@
 #include <C64_6502.h>
 #include <C64.h>
 #include <C64_VICII.h>
+#include <C64_CIA.h>
 #include <C6502.h>
 
 #include <basic.h>
@@ -59,36 +60,15 @@ getByte(ushort addr) const
     if (! charen_) {
       return characters_data[addr - 0xD000]; // 4K Character ROM
     }
+    else if (addr >= 0xDC00 && addr < 0xDD00) {
+      return machine_->getCIA1()->getByte(addr - 0xDC00);
+    }
+    else if (addr >= 0xDD00 && addr < 0xDE00) {
+      return machine_->getCIA2()->getByte(addr - 0xDD00);
+    }
     else {
       if      (addr >= 0xD000 && addr < 0xD400) {
         return machine_->getGPU()->getByte(addr - 0xD000);
-      }
-      else if (addr == 0xDC04) {
-        return machine_->timerA_.count & 0xFF;
-      }
-      else if (addr == 0xDC05) {
-        return (machine_->timerA_.count & 0xFF00) >> 8;
-      }
-      else if (addr == 0xDC06) {
-        return machine_->timerB_.count & 0xFF;
-      }
-      else if (addr == 0xDC07) {
-        return (machine_->timerB_.count & 0xFF00) >> 8;
-      }
-      else if (addr == 0xDC0D) {
-        uchar c = 0x00;
-
-        // clear on read
-        if (machine_->timerA_.zeroed) { c |= 0x01; machine_->timerA_.zeroed = false; }
-        if (machine_->timerB_.zeroed) { c |= 0x02; machine_->timerB_.zeroed = false; }
-
-      //if (todTimer_.alarm ) { c |= 0x04; todTimer_.alarm  = false; }
-      //if (SSRData_ .finish) { c |= 0x08; SSRData_ .finish = false; }
-      //if (flagLine_.signal) { c |= 0x10; flagLine_.signal = false; }
-
-      //if (c) c |= 0x80; // signal bit is set ?
-
-        return c;
       }
     }
   }
@@ -122,72 +102,22 @@ setByte(ushort addr, uchar c)
     }
     else {
       if      (addr >= 0xD000 && addr < 0xD400) {
-        //if (addr == 0xD018)
-        //  machine_->setRasterCompareInterruptValue(c); // low 8 bits
+      //if (addr == 0xD018)
+      //  machine_->getGPU()->setRasterCompareInterruptValue(c); // low 8 bits
 
         machine_->getGPU()->setByte(addr - 0xD000, c);
       }
-      else if (addr == 0xDC00) {
-        for (int i = 0; i < 8; ++i) {
-          if (! (c & (1 << i)))
-            machine_->loadKeyColumn(i);
-        }
+      else if (addr >= 0xDC00 && addr < 0xDD00) {
+        machine_->getCIA1()->setByte(addr - 0xDC00, c);
       }
-      else if (addr == 0xDC04) {
-        machine_->timerA_.latch = (machine_->timerA_.latch & 0xFF00) | c;
-      }
-      else if (addr == 0xDC05) {
-        machine_->timerA_.latch = (machine_->timerA_.latch & 0x00FF) | (c >> 8);
-      }
-      else if (addr == 0xDC06) {
-        machine_->timerB_.latch = (machine_->timerB_.latch & 0xFF00) | c;
-      }
-      else if (addr == 0xDC07) {
-        machine_->timerB_.latch = (machine_->timerB_.latch & 0x00FF) | (c >> 8);
-      }
-      else if (addr == 0xDC0D) {
-        bool setOrClear = (c & 0x80);
+      else if (addr >= 0xDD00 && addr < 0xDE00) {
+        machine_->getCIA2()->setByte(addr - 0xDD00, c);
 
-        if (c & 0x01) machine_->timerA_.enabled = setOrClear;
-        if (c & 0x02) machine_->timerB_.enabled = setOrClear;
+        gpuMem1_ = machine_->getCIA2()->gpuMem1();
+        gpuMem2_ = machine_->getCIA2()->gpuMem2();
 
-    //  if (c & 0x04) todTimer_.enabled = setOrClear;
-    //  if (c & 0x08) SSRData_ .enabled = setOrClear;
-    //  if (c & 0x10) flagLine_.enabled = setOrClear;
-      }
-      else if (addr == 0xDC0E) {
-        machine_->startTimerA(c & 0x01);
-
-        machine_->timerA_.outputB = (c & 0x02);
-        machine_->timerA_.toggleB = (c & 0x04);
-        machine_->timerA_.oneShot = (c & 0x08);
-
-      //if (c & 0x10) machine_->timerA_.counter = getWord(0xDD04);
-
-        machine_->timerA_.countCycles = (c & 0x20);
-  //    machine_->timerA_.serialOut   = (c & 0x40);
-
-  //    todTimer_.use50 = (c & 0x80);
-      }
-      else if (addr == 0xDC0E) {
-        machine_->startTimerB(c & 0x01);
-
-        machine_->timerB_.outputB = (c & 0x02);
-        machine_->timerB_.toggleB = (c & 0x04);
-        machine_->timerB_.oneShot = (c & 0x08);
-
-      //if (c & 0x10) machine_->timerB_.counter = getWord(0xDD06);
-
-        machine_->timerB_.inputMode = (c & 0x60) >> 5;
-
-      //todTimer_.alarm = (c & 0x80);
-      }
-      else if (addr == 0xDD00) { // CI2PRA
-        gpuBank_ = 3 - (c & 0x03);
-        gpuMem1_  = gpuBank_*0x4000;
-        gpuMem2_  = gpuMem1_ + 0x3FFF;
-        charMem1_ = gpuMem1_ + 0x1000;
-        charMem2_ = charMem1_ + 0x0FFF;
+        charMem1_ = machine_->getCIA2()->charMem1();
+        charMem2_ = machine_->getCIA2()->charMem2();
       }
     }
   }
@@ -200,6 +130,13 @@ C64_6502::
 memset(ushort addr, const uchar *data, ushort len)
 {
   C6502::memset(addr, data, len);
+}
+
+void
+C64_6502::
+tick(uchar n)
+{
+  machine_->getCIA1()->tick(n);
 }
 
 bool

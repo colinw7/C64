@@ -18,6 +18,7 @@ SOURCES += \
 CQ64.cpp \
 CQ64_6502.cpp \
 CQ64_VICII.cpp \
+CQ64_CIA.cpp \
 
 HEADERS += \
 ../qinclude/CQ64.h \

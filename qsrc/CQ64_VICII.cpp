@@ -1,5 +1,7 @@
 #include <CQ64_VICII.h>
+#include <CQ64_CIA.h>
 #include <CQ64.h>
+
 #include <QTimer>
 #include <QPainter>
 
@@ -8,6 +10,8 @@ CQ64_VICII(CQ64 *c64) :
  C64_VICII(c64), c64_(c64)
 {
   setObjectName("VICII");
+
+  setFocusPolicy(Qt::StrongFocus);
 
   setScale(4);
 
@@ -44,8 +48,14 @@ updateSlot()
     delete ipainter_;
     delete image_;
 
-    // Screen: 40 x 25
-    image_ = new QImage(scale_*textColumns()*8, scale_*textRows()*8, QImage::Format_ARGB32);
+    // Screen: 40 x 25 (plus margins)
+    int xm = scale()*8*margin();
+    int ym = scale()*8*margin();
+
+    int w = scale_*textColumns()*8;
+    int h = scale_*textRows   ()*8;
+
+    image_ = new QImage(w + 2*xm, h + 2*ym, QImage::Format_ARGB32);
 
     image_->fill(0);
 
@@ -69,6 +79,9 @@ CQ64_VICII::
 paintEvent(QPaintEvent *)
 {
   if (dirty_) {
+    xm_ = scale()*8*margin();
+    ym_ = scale()*8*margin();
+
     drawScreen();
 
     dirty_ = false;
@@ -86,23 +99,48 @@ paintEvent(QPaintEvent *)
 
 void
 CQ64_VICII::
+fillScreen(uchar c)
+{
+  setBrush(c);
+
+  QRect r(0, 0, image_->width(), image_->height());
+
+  ipainter_->fillRect(r, ipainter_->brush());
+}
+
+void
+CQ64_VICII::
 drawPixel(int x, int y, uchar c)
 {
-  setColor(c);
+  setPen(c);
 
   int x1 = x*scale();
   int y1 = y*scale();
 
   for (int iy = 0; iy < scale(); ++iy) {
     for (int ix = 0; ix < scale(); ++ix) {
-      ipainter_->drawPoint(x1 + ix, y1 + iy);
+      ipainter_->drawPoint(xm_ + x1 + ix, ym_ + y1 + iy);
     }
   }
 }
 
 void
 CQ64_VICII::
-setColor(uchar c)
+setPen(uchar c)
+{
+  ipainter_->setPen(getColor(c));
+}
+
+void
+CQ64_VICII::
+setBrush(uchar c)
+{
+  ipainter_->setBrush(getColor(c));
+}
+
+const QColor &
+CQ64_VICII::
+getColor(uchar c) const
 {
   // 16 colors
   static QColor colors[] {
@@ -124,12 +162,32 @@ setColor(uchar c)
     QColor(187, 187, 187)  // Light grey / grey
   };
 
-  ipainter_->setPen(colors[c % 16]);
+  return colors[c % 16];
+}
+
+void
+CQ64_VICII::
+keyPressEvent(QKeyEvent *e)
+{
+  c64_->getCIA1()->handleKey(e, true);
+}
+
+void
+CQ64_VICII::
+keyReleaseEvent(QKeyEvent *e)
+{
+  c64_->getCIA1()->handleKey(e, false);
 }
 
 QSize
 CQ64_VICII::
 sizeHint() const
 {
-  return QSize(scale_*textColumns()*8, scale_*textRows()*8);
+  int xm = scale()*8*margin();
+  int ym = scale()*8*margin();
+
+  int w = scale_*textColumns()*8;
+  int h = scale_*textRows   ()*8;
+
+  return QSize(w + 2*xm, h + 2*ym);
 }

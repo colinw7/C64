@@ -18,15 +18,15 @@ getByte(ushort addr) const
 {
   assert(addr < 0x400);
 
-  addr &= 0x3F;
+  ushort addr1 = addr & 0x3F;
 
-  if (addr > 0x2E) return 0xFF;
+  if (addr1 > 0x2E) return 0xFF;
 
   std::cerr << "VICII::getByte " << std::hex << (0xD000 | addr) << "\n";
 
-  if (addr == 0x12) return rasterLine();
+  if (addr1 == 0x12) return rasterLine();
 
-  return (&SP0X_)[addr];
+  return (&SP0X_)[addr1];
 }
 
 void
@@ -35,14 +35,14 @@ setByte(ushort addr, uchar c)
 {
   assert(addr < 0x400);
 
-  addr &= 0x3F;
+  ushort addr1 = addr & 0x3F;
 
-  if (addr > 0x2E) return;
+  if (addr1 > 0x2E) return;
 
   std::cerr << "VICII::setByte " << std::hex << (0xD000 | addr) << " " <<
                std::hex << int(c) << "\n";
 
-  (&SP0X_)[addr] = c;
+  (&SP0X_)[addr1] = c;
 }
 
 void
@@ -68,7 +68,7 @@ drawScreen()
 
   if (! bitmapGraphics) {
     uchar  videoMatrixOffset = this->videoMatrixOffset();
-    ushort videoMatrixData   = cpu->gpuMem() + videoMatrixOffset*0x400; // (0x400 == 1024)
+    ushort videoMatrixData   = cpu->gpuMem1() + videoMatrixOffset*0x400; // (0x400 == 1024)
 
     drawCharBorder();
 
@@ -93,7 +93,7 @@ drawScreen()
     uchar COLOR = cpu->getByte(0x0286);
 
     uchar  textCharDotOffset = this->textCharDotOffset();
-    ushort textCharDotData   = cpu->gpuMem() + textCharDotOffset*0x400; // (0x400 == 1024)
+    ushort textCharDotData   = cpu->gpuMem1() + textCharDotOffset*0x400; // (0x400 == 1024)
 
     if (! multicolor) {
       int w = 40; // 40 bytes, 320 pixels
@@ -119,7 +119,7 @@ drawScreen()
     }
     else {
       uchar  videoMatrixOffset = this->videoMatrixOffset();
-      ushort videoMatrixData   = cpu->gpuMem() + videoMatrixOffset*0x400; // (0x400 == 1024)
+      ushort videoMatrixData   = cpu->gpuMem1() + videoMatrixOffset*0x400; // (0x400 == 1024)
 
       int w = 20; // 20 bytes, 160 pixels
       int h = 200;
@@ -162,6 +162,7 @@ void
 C64_VICII::
 drawCharBorder()
 {
+  fillScreen(EXTCOL);
 }
 
 void
@@ -176,7 +177,7 @@ drawChar(int x, int y, int i, uchar c)
   bool extendedColor = isExtendedColor();
 
   uchar  textCharDotOffset = this->textCharDotOffset();
-  ushort textCharDotData   = cpu->gpuMem() + textCharDotOffset*0x400; // (0x400 == 1024)
+  ushort textCharDotData   = cpu->gpuMem1() + textCharDotOffset*0x400; // (0x400 == 1024)
 
   ushort charRom = textCharDotData + c*8;
 //ushort charRom = cpu->getWord(0xC000) + c*8;
@@ -280,7 +281,7 @@ drawSprites()
   // 8 Sprites, 24x21 (64 bytes)
 
   uchar  textCharDotOffset = this->textCharDotOffset();
-  ushort textCharDotData   = cpu->gpuMem() + textCharDotOffset*0x400; // (0x400 == 1024)
+  ushort textCharDotData   = cpu->gpuMem1() + textCharDotOffset*0x400; // (0x400 == 1024)
 
   ushort spriteAddr = textCharDotData + 0x3F8;
 
@@ -373,6 +374,12 @@ drawSprite(int s, uchar addr, bool doubleWidth, bool doubleHeight, bool multicol
       }
     }
   }
+}
+
+void
+C64_VICII::
+fillScreen(uchar)
+{
 }
 
 void

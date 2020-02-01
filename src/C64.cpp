@@ -1,6 +1,7 @@
 #include <C64.h>
 #include <C64_6502.h>
 #include <C64_VICII.h>
+#include <C64_CIA.h>
 
 #include <cassert>
 
@@ -44,6 +45,12 @@ init()
 
   if (! gpu_)
     gpu_ = new C64_VICII(this);
+
+  if (! cia1_)
+    cia1_ = new C64_CIA(this, 1);
+
+  if (! cia2_)
+    cia2_ = new C64_CIA(this, 2);
 
   initMemory();
 
@@ -129,6 +136,10 @@ initMemory()
   cpu->setByte(0x8E, 0x52  );
   cpu->setByte(0x8F, 0x58  );
 
+  //---
+
+  // Zero page storage area for the Kernal
+
   cpu->setByte(0x90, 0x00  ); // STATUS
   cpu->setByte(0x91, 0x00  ); // STKEY
   cpu->setByte(0x92, 0x00  ); // SVXT
@@ -197,7 +208,15 @@ initMemory()
   cpu->setByte(0xFB, 0x00  ); // FREEZP (0xFB - 0xFE)
   cpu->setByte(0xFF, 0x00  ); // BASZPT
 
+  //---
+
+  // Microprocessor Stack Area
+
   cpu->setByte(0x100, 0x00); // Stack Area (0x100 - 0x1FF)
+
+  //---
+
+  // BASIC and the Kernal Working Storage
 
   cpu->setByte(0x200, 0x00); // BASIC Line Editor Input Buffer (0x200 - 0x258)
   cpu->setByte(0x259, 0x00); // Location Range: (0x259 - 0x276)
@@ -234,11 +253,11 @@ initMemory()
   cpu->setByte(0x29E, 0x00); // RODBE
   cpu->setByte(0x29F, 0x00); // IRQTMP
   cpu->setByte(0x2A1, 0x00); // ENABL
-  cpu->setByte(0x2A2, 0x00); //
-  cpu->setByte(0x2A3, 0x00); //
-  cpu->setByte(0x2A4, 0x00); //
-  cpu->setByte(0x2A5, 0x00); //
-  cpu->setByte(0x2A6, 0x00); // (PAL/NTSC Flag)
+  cpu->setByte(0x2A2, 0x00); // Indicator of CIA #1 Control Register B Activity During Cassette I/O
+  cpu->setByte(0x2A3, 0x00); // Save Area for CIA #1 Interrupt Control Register During Cassette Read
+  cpu->setByte(0x2A4, 0x00); // Save Area for CIA #1 Control Register A During Cassette Read
+  cpu->setByte(0x2A5, 0x00); // Temporary Index to the Next 40-Column Line for Screen Scrolling
+  cpu->setByte(0x2A6, 0x00); // (PAL/NTSC Flag : 0 NTSC, 1 PAL)
 
   // BASIC Indirect Vector Table (0x300 - 0x30B)
   cpu->setWord(0x300, 0xE38B); // IERROR
@@ -280,6 +299,8 @@ initMemory()
   cpu->setByte(0x33C, 0x00); // TBUFFER (0x33C - 0x3FB)
   cpu->setByte(0x3FC, 0x00); // (Unused 0x3FC - 0x3FF)
 
+  //------
+
   // Video Screen Memory Area
   cpu->setByte(0x400, 0x00); // VICSCN (0x400 - 0x7FF)
 
@@ -302,6 +323,177 @@ initMemory()
 
   // BASIC Registers (0xA000 - 0xBFFF) (initialized from ROM)
 
+  cpu->setWord(0xA000, 0x0000); // Cold Start Vector
+  cpu->setWord(0xA002, 0x0000); // Warm Start Vector
+  cpu->setWord(0xA004, 0x0000); // ASCII Text characters CBMBASIC (0xA004 - 0xA00B)
+  cpu->setWord(0xA00C, 0x0000); // Statement Dispatch Vector Table (0xA00C - 0xA051)
+
+  cpu->setWord(0xA052, 0x0000); // Function Dispatch Vector Table (0xA052 - 0xA07F)
+  cpu->setWord(0xA080, 0x0000); // Operator Dispatch Vector Table (0xA080 - 0xA09D)
+  cpu->setWord(0xA080, 0x0000); // Operator Dispatch Vector Table (0xA080 - 0xA09D)
+  cpu->setWord(0xA09E, 0x0000); // RESLST : List of Keywords (0xA09E - 0xA19D)
+  cpu->setWord(0xA19E, 0x0000); // ERRTAB : ASCII Text of BASIC Error Messages (0xA19E - 0xA327)
+  cpu->setWord(0xA328, 0x0000); // Error Message Vector Table (0xA328 - 0xA364)
+  cpu->setWord(0xA365, 0x0000); // Miscellaneous Messages (0xA365 - 0xA389)
+  cpu->setWord(0xA38A, 0x0000); // FNDFOR : Find FOR on Stack (0xA38A - 0xA3B7)
+
+
+  cpu->setWord(0xA3B8, 0x00); // BLTU
+  cpu->setWord(0xA3FB, 0x00); // GETSTK
+  cpu->setWord(0xA408, 0x00); // REASON
+  cpu->setWord(0xA435, 0x00); // OMERR
+  cpu->setWord(0xA437, 0x00); // ERROR
+  cpu->setWord(0xA474, 0x00); // READY
+  cpu->setWord(0xA480, 0x00); // MAIN
+  cpu->setWord(0xA49C, 0x00); // MAIN1
+  cpu->setWord(0xA533, 0x00); // LINKPRG
+  cpu->setWord(0xA560, 0x00); // INLIN
+  cpu->setWord(0xA579, 0x00); // CRUNCH
+  cpu->setWord(0xA613, 0x00); // FINDLN
+  cpu->setWord(0xA642, 0x00); // SCRTCH
+  cpu->setWord(0xA65E, 0x00); // CLEAR
+  cpu->setWord(0xA68E, 0x00); // RUNC
+  cpu->setWord(0xA69C, 0x00); // LIST
+  cpu->setWord(0xA717, 0x00); // QPLOP
+  cpu->setWord(0xA742, 0x00); // FOR
+  cpu->setWord(0xA7AE, 0x00); // NEWSTT
+  cpu->setWord(0xA7E4, 0x00); // GONE
+  cpu->setWord(0xA81D, 0x00); // RESTOR
+  cpu->setWord(0xA82C, 0x00); // Test STOP Key for Break in Program
+  cpu->setWord(0xA831, 0x00); // END
+  cpu->setWord(0xA857, 0x00); // CONT
+  cpu->setWord(0xA871, 0x00); // RUN
+  cpu->setWord(0xA883, 0x00); // GOSUB
+  cpu->setWord(0xA8A0, 0x00); // GOTO
+  cpu->setWord(0xA8D2, 0x00); // RETURN
+  cpu->setWord(0xA8F8, 0x00); // DATA
+  cpu->setWord(0xA906, 0x00); // DATAN
+  cpu->setWord(0xA928, 0x00); // IF
+  cpu->setWord(0xA93B, 0x00); // REM
+  cpu->setWord(0xA94B, 0x00); // ONGOTO
+  cpu->setWord(0xA96B, 0x00); // LINGET
+  cpu->setWord(0xA9A5, 0x00); // LET
+  cpu->setWord(0xAA80, 0x00); // PRINTN
+  cpu->setWord(0xAA86, 0x00); // CMD
+  cpu->setWord(0xAAA0, 0x00); // PRINT
+  cpu->setWord(0xAB1E, 0x00); // STROUT
+  cpu->setWord(0xAB4D, 0x00); // DOAGIN
+  cpu->setWord(0xAB7B, 0x00); // GET
+  cpu->setWord(0xABA5, 0x00); // INPUTN
+  cpu->setWord(0xABBF, 0x00); // INPUT
+  cpu->setWord(0xAC06, 0x00); // READ
+  cpu->setWord(0xACFC, 0x00); // EXIGNT
+  cpu->setWord(0xAD1E, 0x00); // NEXT
+  cpu->setWord(0xAD8A, 0x00); // FRMNUM
+  cpu->setWord(0xAD9E, 0x00); // FRMEVAL
+  cpu->setWord(0xAE83, 0x00); // EVAL
+  cpu->setWord(0xAEA8, 0x00); // PIVAL
+  cpu->setWord(0xAEF1, 0x00); // PARCHK
+  cpu->setWord(0xAEF7, 0x00); // CHKCLS
+  cpu->setWord(0xAEFA, 0x00); // CHKOPN
+  cpu->setWord(0xAEFF, 0x00); // CHKCOM
+  cpu->setWord(0xAF08, 0x00); // SNERR
+  cpu->setWord(0xAF2B, 0x00); // ISVAR
+  cpu->setWord(0xAFA7, 0x00); // ISFUN
+  cpu->setWord(0xAFE6, 0x00); // OROP
+  cpu->setWord(0xAFE9, 0x00); // ANDOP
+  cpu->setWord(0xB016, 0x00); // DORE1
+  cpu->setWord(0xB018, 0x00); // DIM
+  cpu->setWord(0xB08B, 0x00); // PTRGET
+  cpu->setWord(0xB113, 0x00); // Check If .A Register Holds Alphabetic ASCII Character
+  cpu->setWord(0xB11D, 0x00); // NOTFNS
+  cpu->setWord(0xB185, 0x00); // FINPTR
+  cpu->setWord(0xB194, 0x00); // ARYGET
+  cpu->setWord(0xB1A5, 0x00); // N32768
+  cpu->setWord(0xB1AA, 0x00); // Convert Float to Signed Integer in .A and .Y Registers
+  cpu->setWord(0xB1B2, 0x00); // INTIDX
+  cpu->setWord(0xB1BF, 0x00); // AYINT
+  cpu->setWord(0xB1D1, 0x00); // ISARY
+  cpu->setWord(0xB245, 0x00); // BSERR
+  cpu->setWord(0xB248, 0x00); // FCERR
+  cpu->setWord(0xB34C, 0x00); // UMULT
+  cpu->setWord(0xB37D, 0x00); // FRE
+  cpu->setWord(0xB391, 0x00); // GIVAYF
+  cpu->setWord(0xB39E, 0x00); // POS
+  cpu->setWord(0xB3A6, 0x00); // ERRDIR
+  cpu->setWord(0xB3B3, 0x00); // DEF
+  cpu->setWord(0xB3E1, 0x00); // GETFNM
+  cpu->setWord(0xB3F4, 0x00); // FNDOER
+  cpu->setWord(0xB465, 0x00); // STRD
+  cpu->setWord(0xB487, 0x00); // STRLIT
+  cpu->setWord(0xB4F4, 0x00); // GETSPA
+  cpu->setWord(0xB526, 0x00); // GARBAG
+  cpu->setWord(0xB5BD, 0x00); // Check for Most Eligible String to Collect
+  cpu->setWord(0xB606, 0x00); // Collect a String
+  cpu->setWord(0xB63D, 0x00); // CAT
+  cpu->setWord(0xB67A, 0x00); // MOVINS
+  cpu->setWord(0xB6A3, 0x00); // FRESTR
+  cpu->setWord(0xB6DB, 0x00); // FRETMS
+  cpu->setWord(0xB6EC, 0x00); // CHRD
+  cpu->setWord(0xB700, 0x00); // LEFTD
+  cpu->setWord(0xB72C, 0x00); // RIGHTD
+  cpu->setWord(0xB737, 0x00); // MIDD
+  cpu->setWord(0xB761, 0x00); // PREAM
+  cpu->setWord(0xB77C, 0x00); // LEN
+  cpu->setWord(0xB78B, 0x00); // ASC
+  cpu->setWord(0xB79B, 0x00); // GETBYTC
+  cpu->setWord(0xB7AD, 0x00); // VAL
+  cpu->setWord(0xB7EB, 0x00); // GETNUM
+  cpu->setWord(0xB7F7, 0x00); // GETADR
+  cpu->setWord(0xB80D, 0x00); // PEEK
+  cpu->setWord(0xB824, 0x00); // POKE
+  cpu->setWord(0xB82D, 0x00); // FUWAIT
+  cpu->setWord(0xB849, 0x00); // FADDH
+  cpu->setWord(0xB850, 0x00); // FSUB
+  cpu->setWord(0xB853, 0x00); // FSUBT
+  cpu->setWord(0xB867, 0x00); // FADD
+  cpu->setWord(0xB86A, 0x00); // FADDT
+  cpu->setWord(0xB8A7, 0x00); // FADD4
+  cpu->setWord(0xB8FE, 0x00); // NORMAL
+  cpu->setWord(0xB947, 0x00); // NEGFAC
+  cpu->setWord(0xB97E, 0x00); // OVERR
+  cpu->setWord(0xB983, 0x00); // MULSHF
+  cpu->setWord(0xB9BC, 0x00); // FONE
+  cpu->setWord(0xB9C1, 0x00); // LOGCN2
+  cpu->setWord(0xB9EA, 0x00); // LOG
+  cpu->setWord(0xBA28, 0x00); // FMULT
+  cpu->setWord(0xBA59, 0x00); // MLTPLY
+  cpu->setWord(0xBA8C, 0x00); // CONUPK
+  cpu->setWord(0xBAB7, 0x00); // MULDIV
+  cpu->setWord(0xBAD4, 0x00); // MLDVEX
+  cpu->setWord(0xBAE2, 0x00); // MUL10
+  cpu->setWord(0xBAF9, 0x00); // TENC
+  cpu->setWord(0xBAFE, 0x00); // DIV10
+  cpu->setWord(0xBB0F, 0x00); // FDIV
+  cpu->setWord(0xBB12, 0x00); // FDIVT
+  cpu->setWord(0xBBA2, 0x00); // MOVFM
+  cpu->setWord(0xBBC7, 0x00); // MOV2F
+  cpu->setWord(0xBBFC, 0x00); // MOVFA
+  cpu->setWord(0xBC0C, 0x00); // MOVAF
+  cpu->setWord(0xBC0F, 0x00); // MOVEF
+  cpu->setWord(0xBC1B, 0x00); // ROUND
+  cpu->setWord(0xBC2B, 0x00); // SIGN
+  cpu->setWord(0xBC39, 0x00); // SGN
+  cpu->setWord(0xBC58, 0x00); // ABS
+  cpu->setWord(0xBC5B, 0x00); // FCOMP
+  cpu->setWord(0xBC9B, 0x00); // QINT
+  cpu->setWord(0xBCCC, 0x00); // INT
+  cpu->setWord(0xBCF3, 0x00); // FIN
+  cpu->setWord(0xBD7E, 0x00); // FINLOG
+  cpu->setWord(0xBDB3, 0x00); // NO999
+  cpu->setWord(0xBDC0, 0x00); // INPRT
+  cpu->setWord(0xBDCD, 0x00); // LINPRT
+  cpu->setWord(0xBDDD, 0x00); // FOUT
+  cpu->setWord(0xBF11, 0x00); // FHALF
+  cpu->setWord(0xBF1C, 0x00); // FOUTBL
+  cpu->setWord(0xBF3A, 0x00); // FDCEND
+  cpu->setWord(0xBF52, 0x00); // Unused area
+  cpu->setWord(0xBF71, 0x00); // SQR
+  cpu->setWord(0xBF7B, 0x00); // FPWRT
+  cpu->setWord(0xBFB4, 0x00); // NEGOP
+  cpu->setWord(0xBFBF, 0x00); // EXPCON
+  cpu->setWord(0xBFED, 0x00); // EXP
+
   //---
 
   // 4K Free RAM
@@ -309,8 +501,12 @@ initMemory()
 
   //---
 
+  // VIC-II Chip Registers (0xD000 - 0xD02E)
+  cpu->setByte(0xD000, 0x00);
+
   // Sound Interface Device (SID) Registers (0xD400 - 0xD41C)
   // TODO: every 64 byte area in this 1K block is a mirror of every other
+
   cpu->setByte(0xD400, 0x00); // FRELO1
   cpu->setByte(0xD401, 0x00); // FREHI1
   cpu->setByte(0xD402, 0x00); // PWLO1
@@ -349,30 +545,6 @@ initMemory()
   cpu->setByte(0xD420, 0x00); // (0xD420 - 0xD7FF) (Not used ?)
 
   cpu->setByte(0xD800, 0x00); // Color RAM (0xD800 - 0xDBFF) (Not movable)
-
-  // TODO: more to do here
-  cpu->setByte(0xDC00, 0xFF); // CIAPRA (DATA PORT REGISTER A)
-  cpu->setByte(0xDC01, 0x00); // CIAPRB (DATA PORT REGISTER B)
-  cpu->setByte(0xDC02, 0xFF); // CIDDRA (DATA DIRECTION REGISTER A)
-  cpu->setByte(0xDC03, 0x00); // CIDDRB (DATA DIRECTION REGISTER B)
-
-  cpu->setWord(0xDC04, 0x4295); // TIMALO/TIMAHI (Timer A Low/High)
-  cpu->setWord(0xDC06, 0x0000); // TIMBLO/TIMBHI (Timer B Low/High)
-
-  // Time of Day Clock (TOD) (0xDC08 - 0xDC0B)
-  // TODO: implement
-  cpu->setByte(0xDC08, 0x00); // TODTEN
-  cpu->setByte(0xDC09, 0x00); // TODSEC
-  cpu->setByte(0xDC0A, 0x00); // TODMIN
-  cpu->setByte(0xDC0B, 0x00); // TODHRS
-
-  cpu->setByte(0xDC0C, 0x00); // CIASDR
-  cpu->setByte(0xDC0D, 0x00); // CIAICR
-  cpu->setByte(0xDC0E, 0x00); // CIACRA
-  cpu->setByte(0xDC0F, 0x00); // CIACRB
-
-  // TODO: every 16-byte area in this 256-byte block is a mirror of every other
-  cpu->setByte(0xDC10, 0x00); // CIA #1 Register Images (0xDC10 - 0xDCFF)
 
   cpu->setByte(0xDD00, 0x00); // CI2PRA (TODO: handling of video memory)
   cpu->setByte(0xDD01, 0x00); // CI2PRB
@@ -651,78 +823,5 @@ void
 C64::
 tick(ushort n)
 {
-  // microprocessor machine cycles = 1,022,730 cycles per second
-  // See line 8560 of mapping-c64.txt
-  timerA_.zeroed = (timerA_.count > 0 && timerA_.count <= n);
-  timerA_.zeroed = (timerB_.count > 0 && timerB_.count <= n);
-
-  timerA_.count -= n;
-  timerB_.count -= n;
-
-  auto cpu = getCPU();
-
-  uchar CIAICR = cpu->getByte(0xDC0D);
-
-  if (timerA_.zeroed) {
-    cpu->setByte(0xDC0D, CIAICR | 0x01);
-  }
-}
-
-void
-C64::
-startTimerA(bool /*start*/)
-{
-}
-
-void
-C64::
-startTimerB(bool /*start*/)
-{
-}
-
-void
-C64::
-loadKeyColumn(int i)
-{
-  uchar c = 0xFF;
-
-  // set bit zero if key pressed
-  switch (i) {
-    // CRSR DN, F5    ,  F3     , F1     , F7     , CRSR RT, RETURN , DELETE
-    case 0: {
-      break;
-    }
-    // LSHIFT , E      , S      , Z      , 4      , A      , W      , 3
-    case 1: {
-      break;
-    }
-    // X      , T      , F      , C      , 6      , D      , R      , 5
-    case 2: {
-      break;
-    }
-    // V      , U      , H      , B      , 8      , G      , Y      , 7
-    case 3: {
-      break;
-    }
-    // N      , O      , K      , M      , 0      , J      , I      , 9
-    case 4: {
-      break;
-    }
-    // ,      , @      , :      , .      , -      , L      , P      , +
-    case 5: {
-      break;
-    }
-    // /      , ^      , =      , RSHIFT , HOME   , ;      , *      , LIRA
-    case 6: {
-      break;
-    }
-    // STOP   , Q      , C=     , SPACE  , 2      , CTRL   , <-     , 1
-    case 7: {
-      break;
-    }
-  }
-
-  auto cpu = getCPU();
-
-  cpu->setByte(0xDC01, c);
+  cia1_->tick(n);
 }
