@@ -34,6 +34,8 @@ class C64_VICII {
 
   virtual void drawPixel(int x, int y, uchar c);
 
+  bool isScreen(ushort addr, ushort len) const;
+
   //---
 
   // VIC-II Chip Registers (0xD000 - 0xD02E)

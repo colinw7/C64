@@ -17,7 +17,8 @@ class CQ64_6502 : public QObject, public C64_6502 {
 //void flagsChanged() override { emit flagsChangedSignal(); }
 //void stackChanged() override { emit stackChangedSignal(); }
   void pcChanged   () override { emit pcChangedSignal   (); }
-  void memChanged  () override { emit memChangedSignal  (); }
+
+  void memChanged(ushort addr, ushort len) override { emit memChangedSignal(addr, len); }
 
   void handleBreak  () override { emit handleBreakSignal(); }
   void breakpointHit() override { emit breakpointHitSignal(); }
@@ -31,7 +32,7 @@ class CQ64_6502 : public QObject, public C64_6502 {
 //void flagsChangedSignal();
 //void stackChangedSignal();
   void pcChangedSignal();
-  void memChangedSignal();
+  void memChangedSignal(ushort addr, ushort len);
 
   void handleBreakSignal();
   void breakpointHitSignal();

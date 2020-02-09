@@ -17,6 +17,11 @@ class C64_CIA {
 
   //---
 
+  bool isDebug() const { return debug_; }
+  void setDebug(bool b) { debug_ = b; }
+
+  //---
+
   uchar getByte(ushort addr) const;
   void setByte(ushort addr, uchar c);
 
@@ -151,6 +156,7 @@ class C64_CIA {
   ushort charMem1_ { 0x1000 };
   ushort charMem2_ { 0x1FFF };
 
+  bool debug_     { false };
   bool enableIRQ_ { true };
 };
 

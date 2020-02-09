@@ -30,7 +30,7 @@ class CQ64 : public QObject, public C64 {
 //void flagsChangedSignal();
 //void stackChangedSignal();
   void pcChangedSignal();
-  void memChangedSignal();
+  void memChangedSignal(ushort addr, ushort len);
 
   void handleBreakSignal();
   void breakpointHitSignal();

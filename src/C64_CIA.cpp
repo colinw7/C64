@@ -14,6 +14,9 @@ C64_CIA(C64 *c64, int id) :
 
   if (getenv("C64_DISABLE_IRQ"))
     enableIRQ_ = false;
+
+  if (getenv("C64_CIA_DEBUG"))
+    debug_ = true;
 }
 
 uchar
@@ -26,8 +29,9 @@ getByte(ushort addr) const
 
   if      (id_ == 1) { // CIA #1
     auto debugRet1 = [&](uchar c) {
-      std::cerr << "CIA #1::getByte " << std::hex << (0xDC00 | addr) << " " <<
-                   std::hex << int(c) << "\n";
+      if (isDebug())
+        std::cerr << "CIA #1::getByte " << std::hex << (0xDC00 | addr) << " " <<
+                     std::hex << int(c) << "\n";
       return c;
     };
 
@@ -92,8 +96,9 @@ getByte(ushort addr) const
   }
   else if (id_ == 2) { // CIA #2
     auto debugRet2 = [&](uchar c) {
-      std::cerr << "CIA #2::getByte " << std::hex << (0xDD00 | addr) << " " <<
-                   std::hex << int(c) << "\n";
+      if (isDebug())
+        std::cerr << "CIA #2::getByte " << std::hex << (0xDD00 | addr) << " " <<
+                     std::hex << int(c) << "\n";
       return c;
     };
 
@@ -170,10 +175,16 @@ setByte(ushort addr, uchar c)
   ushort addr1 = addr & 0x0F;
 
   if      (id_ == 1) { // CIA #1
-    std::cerr << "CIA #1::setByte " << std::hex << (0xDC00 | addr) << " " <<
-                 std::hex << int(c) << "\n";
+    if (isDebug())
+      std::cerr << "CIA #1::setByte " << std::hex << (0xDC00 | addr) << " " <<
+                   std::hex << int(c) << "\n";
 
     if      (addr1 == 0x00) { // CIAPRA
+      if (isDebug()) {
+        if (CIDDRA != 0xFF || CIDDRB != 0x00)
+          std::cerr << "CIDDRA or CIDDRB non-standard value\n";
+      }
+
       uchar c1 = getKeyColumns(c);
 
       CIAPRB = c1;
@@ -253,8 +264,10 @@ setByte(ushort addr, uchar c)
     (&CIAPRA)[addr1] = c;
   }
   else if (id_ == 2) { // CIA #2
-    std::cerr << "CIA #2::setByte " << std::hex << (0xDD00 | addr) << " " <<
-                 std::hex << int(c) << "\n";
+    if (isDebug()) {
+      std::cerr << "CIA #2::setByte " << std::hex << (0xDD00 | addr) << " " <<
+                   std::hex << int(c) << "\n";
+    }
 
     if      (addr1 == 0x00) { // CI2PRA
       gpuBank_ = 3 - (c & 0x03);
@@ -358,7 +371,9 @@ tick(ushort n)
     CIAICR |= 0x02; // Set bit 1
 
     if (timerB_.enabled) {
-      std::cerr << "B NMI\n";
+      if (isDebug())
+        std::cerr << "B NMI\n";
+
       //c64_->getCPU()->resetNMI();
     }
 
@@ -382,7 +397,8 @@ tick(ushort n)
 
     if (timerA_.enabled) {
       if (! c64_->getCPU()->Iflag()) {
-        std::cerr << "A IRQ " <<  std::hex << c64_->getCPU()->PC() << "\n";
+        if (isDebug())
+          std::cerr << "A IRQ " <<  std::hex << c64_->getCPU()->PC() << "\n";
 
         if (enableIRQ_)
           c64_->getCPU()->resetIRQ();

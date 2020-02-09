@@ -1,7 +1,9 @@
 #include <CQ64_VICII.h>
 #include <CQ64_CIA.h>
+#include <CQ64_6502.h>
 #include <CQ64.h>
 
+#include <QApplication>
 #include <QTimer>
 #include <QPainter>
 
@@ -35,9 +37,24 @@ setScale(int scale)
 
 void
 CQ64_VICII::
-memChangedSlot()
+memChangedSlot(ushort addr, ushort len)
 {
+  static int updateCount;
+
+  if (! isScreen(addr, len))
+    return;
+
   dirty_ = true;
+
+  //---
+
+  ++updateCount;
+
+  if (updateCount > 1000) {
+    qApp->processEvents();
+
+    updateCount = 0;
+  }
 }
 
 void
@@ -91,7 +108,7 @@ paintEvent(QPaintEvent *)
 
   QPainter painter(this);
 
-  painter.fillRect(rect(), QColor(0,0,0));
+  painter.fillRect(rect(), Qt::black);
 
   if (image_)
     painter.drawImage(0, 0, *image_);

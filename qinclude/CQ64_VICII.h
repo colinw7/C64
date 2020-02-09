@@ -38,7 +38,7 @@ class CQ64_VICII : public QWidget, public C64_VICII {
   QSize sizeHint() const override;
 
  public slots:
-  void memChangedSlot();
+  void memChangedSlot(ushort addr, ushort len);
 
  private slots:
   void updateSlot();
@@ -55,7 +55,7 @@ class CQ64_VICII : public QWidget, public C64_VICII {
   QImage*     image_    { nullptr };
   QPainter*   ipainter_ { nullptr };
   int         margin_   { 4 };
-  int         scale_    { -1 };
+  int         scale_    { 1 };
   bool        dirty_    { false };
   bool        newScale_ { false };
   mutable int xm_       { 0 };

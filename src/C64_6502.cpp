@@ -141,7 +141,7 @@ tick(uchar n)
 
 bool
 C64_6502::
-isScreen(ushort, ushort) const
+isScreen(ushort addr, ushort len) const
 {
-  return false;
+  return machine_->getGPU()->isScreen(addr, len);
 }

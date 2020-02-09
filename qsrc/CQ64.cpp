@@ -26,7 +26,8 @@ init()
 //connect(qcpu_, SIGNAL(stackChangedSignal()), this, SIGNAL(stackChangedSignal()));
 
   connect(qcpu_, SIGNAL(pcChangedSignal()), this, SIGNAL(pcChangedSignal()));
-  connect(qcpu_, SIGNAL(memChangedSignal()), this, SIGNAL(memChangedSignal()));
+  connect(qcpu_, SIGNAL(memChangedSignal(unsigned short, unsigned short)),
+          this, SIGNAL(memChangedSignal(unsigned short, unsigned short)));
 
   connect(qcpu_, SIGNAL(handleBreakSignal()), this, SIGNAL(handleBreakSignal()));
   connect(qcpu_, SIGNAL(breakpointHitSignal()), this, SIGNAL(breakpointHitSignal()));
@@ -34,7 +35,8 @@ init()
 
   connect(qcpu_, SIGNAL(breakpointsChangedSignal()), this, SIGNAL(breakpointsChangedSignal()));
 
-  connect(qcpu_, SIGNAL(memChangedSignal()), qgpu_, SLOT(memChangedSlot()));
+  connect(qcpu_, SIGNAL(memChangedSignal(unsigned short, unsigned short)),
+          qgpu_, SLOT(memChangedSlot(unsigned short, unsigned short)));
 
   //---
 

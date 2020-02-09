@@ -15,7 +15,7 @@ CQ64Dbg(CQ64 *machine) :
 
   connect(machine, SIGNAL(pcChangedSignal()), this, SLOT(updateSlot()));
 
-//connect(machine, SIGNAL(memChangedSignal()), this, SLOT(updateSlot()));
+//connect(machine, SIGNAL(memChangedSignal(ushort addr, ushort len)), this, SLOT(updateSlot()));
 
   connect(machine, SIGNAL(handleBreakSignal()), this, SLOT(forceHalt()));
   connect(machine, SIGNAL(breakpointHitSignal()), this, SLOT(forceHalt()));

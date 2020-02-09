@@ -90,8 +90,6 @@ drawScreen()
   else {
     bool multicolor = isMultiColor();
 
-    uchar COLOR = cpu->getByte(0x0286);
-
     uchar  textCharDotOffset = this->textCharDotOffset();
     ushort textCharDotData   = cpu->gpuMem1() + textCharDotOffset*0x400; // (0x400 == 1024)
 
@@ -110,7 +108,7 @@ drawScreen()
           for (int i = 0; i < 8; ++i, ++ix) {
             bool b = (c & (1 << i));
 
-            uchar pc = (! b ? BGCOL0 : COLOR);
+            uchar pc = (! b ? BGCOL0 : BGCOL1);
 
             drawPixel(x + ix, y, pc);
           }
@@ -140,7 +138,7 @@ drawScreen()
             if      (! b0 && ! b1) pc = BGCOL0;
             else if (  b0 && ! b1) pc = (vc & 0x0F);
             else if (! b0 &&   b1) pc = (vc & 0xF0) >> 4;
-            else                   pc = COLOR;
+            else                   pc = BGCOL1;
 
             drawPixel(x + ix, y, pc);
           }
@@ -387,4 +385,34 @@ C64_VICII::
 drawPixel(int x, int y, uchar c)
 {
   assert(x + y + c > 0);
+}
+
+bool
+C64_VICII::
+isScreen(ushort addr, ushort len) const
+{
+  auto cpu = c64_->getCPU();
+
+  ushort addr1 = addr;
+  ushort addr2 = addr1 + len - 1;
+
+  auto rangesOverlap = [&](ushort r1, ushort r2) {
+    return ! (addr2 < r1 || addr1 > r2);
+  };
+
+  if (rangesOverlap(0xD000, 0xD400)) return true;
+
+  uchar  videoMatrixOffset = this->videoMatrixOffset();
+  ushort videoMatrixData1  = cpu->gpuMem1() + videoMatrixOffset*0x400; // (0x400 == 1024)
+  ushort videoMatrixData2  = videoMatrixData1 + 0x1FFF;
+
+  if (rangesOverlap(videoMatrixData1, videoMatrixData2)) return true;
+
+  uchar  textCharDotOffset = this->textCharDotOffset();
+  ushort textCharDotData1  = cpu->gpuMem1() + textCharDotOffset*0x400; // (0x400 == 1024)
+  ushort textCharDotData2  = textCharDotData1 + 0x1FFF;
+
+  if (rangesOverlap(textCharDotData1, textCharDotData2)) return true;
+
+  return false;
 }

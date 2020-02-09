@@ -1,7 +1,6 @@
-#include <CQ64Dbg.h>
+#include <CQ64.h>
 #include <CQ64_6502.h>
 #include <CQApp.h>
-#include <CQ64.h>
 
 int
 main(int argc, char **argv)
@@ -29,27 +28,11 @@ main(int argc, char **argv)
 
   c64->init();
 
-  if (binary) {
-    if (filename != "") {
-      c64->getCPU()->loadBin(filename);
-    }
-    else {
-      std::cerr << "Missing binary filename '" << filename << "'\n";
-      exit(1);
-    }
-  }
-
   c64->show();
 
   //---
 
-  CQ64Dbg dbg(c64);
-
-  dbg.init();
-
-  dbg.setFixedFont(QFont("Courier New", 16));
-
-  dbg.show();
+  c64->getCPU()->run();
 
   return app.exec();
 }
