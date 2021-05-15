@@ -379,7 +379,7 @@ tick(ushort n)
 
     if (timerB_.outputB) {
       if (timerB_.toggleB) {
-        // toogle bit 7
+        // toggle bit 7
       }
       else {
         // pulse bit 7 ?
