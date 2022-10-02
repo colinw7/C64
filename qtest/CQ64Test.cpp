@@ -9,13 +9,13 @@ main(int argc, char **argv)
 
   std::string filename;
 
-  bool binary = false;
+//bool binary = false;
 
   for (int i = 1; i < argc; ++i) {
     std::string arg = argv[i];
 
     if      (arg == "-bin") {
-      binary = true;
+    //binary = true;
     }
     else {
       filename = argv[i];
